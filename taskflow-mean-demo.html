@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow — MEAN Stack Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════ */
+:root {
+  --bg:       #0d1117;
+  --s1:       #161b22;
+  --s2:       #1c2128;
+  --s3:       #21262d;
+  --s4:       #262c36;
+  --b1:       #21262d;
+  --b2:       #30363d;
+  --b3:       #3d444d;
+  --green:    #3fb950;
+  --green-d:  #238636;
+  --green-g:  rgba(63,185,80,.1);
+  --blue:     #58a6ff;
+  --blue-d:   #1f6feb;
+  --blue-g:   rgba(88,166,255,.1);
+  --amber:    #d29922;
+  --amber-l:  #e3b341;
+  --red:      #f85149;
+  --red-g:    rgba(248,81,73,.1);
+  --purple:   #bc8cff;
+  --cyan:     #39d353;
+  --t1:       #e6edf3;
+  --t2:       #8d96a0;
+  --t3:       #484f58;
+  --t4:       #2d333b;
+  --mono:     'JetBrains Mono', 'Consolas', monospace;
+  --ui:       'DM Sans', system-ui, sans-serif;
+  --r:        6px;
+  --rsm:      4px;
+  --code-w:   440px;
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--t1); font-family: var(--ui); font-size: 13px; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 3px; }
+button { cursor: pointer; font-family: var(--ui); }
+
+/* ═══════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════ */
+#app { display: grid; grid-template-rows: 44px 1fr; grid-template-columns: var(--code-w) 1fr; height: 100vh; }
+
+/* ═══════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════ */
+#topbar {
+  grid-column: 1 / -1;
+  background: #010409;
+  border-bottom: 1px solid var(--b1);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 12px;
+}
+.tb-logo { display: flex; align-items: center; gap: 9px; }
+.tb-logomark {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--green-d), #2ea043);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  box-shadow: 0 0 12px rgba(35,134,54,.4);
+}
+.tb-name { font-size: 14px; font-weight: 700; letter-spacing: -.3px; color: var(--t1); }
+.tb-name span { color: var(--green); }
+.tb-div { width: 1px; height: 18px; background: var(--b2); }
+.tb-tag { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--t3); font-family: var(--mono); }
+.tb-spacer { flex: 1; }
+.tb-stack {
+  display: flex; gap: 6px;
+}
+.tech-chip {
+  font-size: 9px; font-weight: 600; letter-spacing: .5px; padding: 3px 7px;
+  border-radius: 10px; font-family: var(--mono);
+}
+.tc-node   { background: rgba(63,185,80,.1);  color: var(--green); border: 1px solid rgba(63,185,80,.2); }
+.tc-mongo  { background: rgba(88,166,255,.1); color: var(--blue);  border: 1px solid rgba(88,166,255,.2); }
+.tc-ang    { background: rgba(248,81,73,.1);  color: var(--red);   border: 1px solid rgba(248,81,73,.2); }
+.tc-exp    { background: rgba(210,153,34,.1); color: var(--amber-l); border: 1px solid rgba(210,153,34,.2); }
+.tb-live {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 9px; font-family: var(--mono); font-weight: 600;
+  color: var(--green); letter-spacing: .8px;
+}
+.live-d { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: lp 2s ease infinite; }
+@keyframes lp { 0%,100%{opacity:1}50%{opacity:.3} }
+
+/* ═══════════════════════════════════════
+   CODE PANEL (LEFT)
+═══════════════════════════════════════ */
+#code-panel {
+  background: #010409;
+  border-right: 1px solid var(--b1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.cp-tabs {
+  display: flex; overflow-x: auto; flex-shrink: 0;
+  border-bottom: 1px solid var(--b1);
+  background: var(--bg);
+}
+.cp-tabs::-webkit-scrollbar { height: 3px; }
+.cp-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border: none; background: none;
+  font-family: var(--mono); font-size: 10px; color: var(--t3);
+  cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent;
+  transition: all .12s; flex-shrink: 0;
+}
+.cp-tab:hover { color: var(--t2); background: rgba(255,255,255,.02); }
+.cp-tab.active { color: var(--t1); border-bottom-color: var(--blue); background: rgba(88,166,255,.05); }
+.cp-tab .ft { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ft-ts { background: #3b82f6; }
+.ft-js { background: #f0d030; }
+.ft-dir { background: var(--t3); }
+
+.cp-header {
+  padding: 8px 14px; border-bottom: 1px solid rgba(33,38,45,.6);
+  font-size: 10px; font-family: var(--mono); color: var(--t3);
+  background: rgba(1,4,9,.5); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cp-path { color: var(--t3); }
+.cp-lang { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: rgba(88,166,255,.12); color: var(--blue); }
+
+.cp-body {
+  flex: 1; overflow-y: auto;
+  font-family: var(--mono); font-size: 10.5px; line-height: 1.75;
+  padding: 10px 0;
+}
+.cl { display: flex; min-height: 18px; }
+.cl:hover { background: rgba(255,255,255,.02); }
+.ln { min-width: 38px; text-align: right; padding-right: 14px; color: var(--t4); font-size: 9.5px; line-height: 18px; user-select: none; flex-shrink: 0; }
+.lc { flex: 1; padding-right: 14px; white-space: pre; }
+
+/* syntax */
+.kw  { color: #ff7b72; }
+.fn  { color: #d2a8ff; }
+.cls { color: #79c0ff; }
+.str { color: #a5d6ff; }
+.num { color: #f0883e; }
+.cm  { color: #8b949e; font-style: italic; }
+.dec { color: #ffa657; }
+.op  { color: #e6edf3; }
+.prp { color: #7ee787; }
+.typ { color: #79c0ff; }
+.pun { color: #e6edf3; }
+
+/* ═══════════════════════════════════════
+   PREVIEW PANEL (RIGHT)
+═══════════════════════════════════════ */
+#preview {
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+}
+
+/* Inner layout: sidebar + main */
+.app-shell {
+  flex: 1; display: grid;
+  grid-template-columns: 220px 1fr;
+  overflow: hidden;
+}
+
+/* ── App Sidebar ── */
+.app-sidebar {
+  background: var(--s1);
+  border-right: 1px solid var(--b1);
+  overflow-y: auto; display: flex; flex-direction: column;
+}
+.as-section { padding: 12px 0 6px; }
+.as-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t3); padding: 0 14px 6px; }
+.as-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 14px; cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left;
+  color: var(--t2); font-size: 12px; transition: all .12s;
+  border-left: 2px solid transparent;
+}
+.as-item:hover { background: rgba(255,255,255,.03); color: var(--t1); }
+.as-item.active { background: rgba(88,166,255,.07); border-left-color: var(--blue); color: var(--t1); }
+.as-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.as-badge { margin-left: auto; font-size: 9px; font-family: var(--mono); padding: 1px 5px; border-radius: 8px; background: var(--s3); color: var(--t3); }
+.as-item.active .as-badge { background: rgba(88,166,255,.15); color: var(--blue); }
+.as-footer { margin-top: auto; padding: 14px; border-top: 1px solid var(--b1); }
+.as-user { display: flex; align-items: center; gap: 8px; }
+.as-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--blue-d), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.as-user-name { font-size: 11px; font-weight: 600; color: var(--t1); }
+.as-user-role { font-size: 9px; color: var(--t3); }
+
+/* ── App Main ── */
+.app-main { overflow-y: auto; padding: 20px; }
+
+/* ── Dashboard cards ── */
+.dash-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px; }
+.dash-card {
+  background: var(--s1); border: 1px solid var(--b1);
+  border-radius: var(--r); padding: 14px 16px;
+  position: relative; overflow: hidden;
+  transition: border-color .2s;
+}
+.dash-card:hover { border-color: var(--b2); }
+.dash-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; }
+.dc-green::before { background: linear-gradient(90deg, var(--green-d), transparent); }
+.dc-blue::before  { background: linear-gradient(90deg, var(--blue), transparent); }
+.dc-amber::before { background: linear-gradient(90deg, var(--amber), transparent); }
+.dc-red::before   { background: linear-gradient(90deg, var(--red), transparent); }
+.dc-label { font-size: 10px; font-weight: 600; letter-spacing: .5px; color: var(--t2); margin-bottom: 8px; text-transform: uppercase; }
+.dc-val { font-size: 24px; font-weight: 700; font-family: var(--mono); color: var(--t1); line-height: 1; letter-spacing: -1px; }
+.dc-sub { font-size: 10px; color: var(--t3); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+.dc-sub.up { color: var(--green); }
+.dc-sub.down { color: var(--red); }
+
+/* ── Section header ── */
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+.sec-title { font-size: 13px; font-weight: 700; color: var(--t1); display: flex; align-items: center; gap: 7px; }
+.sec-actions { display: flex; gap: 6px; align-items: center; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px; border: none; border-radius: var(--r);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all .15s; white-space: nowrap; font-family: var(--ui);
+}
+.btn-green { background: var(--green-d); color: #fff; }
+.btn-green:hover { background: #2ea043; box-shadow: 0 4px 12px rgba(35,134,54,.35); }
+.btn-ghost { background: var(--s2); color: var(--t2); border: 1px solid var(--b2); }
+.btn-ghost:hover { background: var(--s3); color: var(--t1); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-icon { width: 28px; height: 28px; padding: 0; background: none; border: 1px solid var(--b1); border-radius: var(--rsm); color: var(--t3); display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all .12s; }
+.btn-icon:hover { background: var(--s3); color: var(--t1); border-color: var(--b2); }
+.btn-danger { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.2); }
+.btn-danger:hover { background: rgba(248,81,73,.2); }
+
+/* ── Toolbar ── */
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.search-w { position: relative; }
+.search-ico { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--t3); font-size: 12px; pointer-events: none; }
+.search-inp {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: var(--r); padding: 7px 10px 7px 28px;
+  color: var(--t1); font-size: 12px; font-family: var(--ui);
+  outline: none; width: 200px; transition: all .15s;
+}
+.search-inp:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(88,166,255,.12); width: 240px; }
+.search-inp::placeholder { color: var(--t4); }
+.f-sel {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: var(--r); padding: 7px 22px 7px 9px;
+  color: var(--t2); font-size: 11px; font-family: var(--ui);
+  outline: none; cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23484f58'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center;
+  transition: border-color .15s;
+}
+.f-sel:focus { border-color: var(--blue); }
+.spacer { flex: 1; }
+
+/* ── Table ── */
+.tbl-wrap {
+  background: var(--s1); border: 1px solid var(--b1);
+  border-radius: var(--r); overflow: hidden;
+}
+.tbl-inner { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 9px 12px; text-align: left;
+  font-size: 10px; font-weight: 600; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--t3);
+  background: rgba(0,0,0,.15); border-bottom: 1px solid var(--b1);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: color .12s;
+}
+thead th:hover { color: var(--t1); }
+thead th.sa::after { content: ' ↑'; color: var(--blue); font-size: 10px; }
+thead th.sd::after { content: ' ↓'; color: var(--blue); font-size: 10px; }
+thead th.ns { cursor: default; }
+tbody tr {
+  border-bottom: 1px solid rgba(33,38,45,.6);
+  transition: background .1s; cursor: pointer;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(88,166,255,.03); }
+tbody tr.row-sel { background: rgba(88,166,255,.06) !important; }
+tbody tr.row-new { animation: rowIn .4s ease; }
+tbody tr.row-del { animation: rowOut .3s ease forwards; }
+@keyframes rowIn  { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes rowOut { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(-16px)} }
+td { padding: 10px 12px; font-size: 12px; color: var(--t2); white-space: nowrap; }
+.td-b { color: var(--t1); font-weight: 500; }
+.td-m { font-family: var(--mono); font-size: 11px; }
+.td-over { color: var(--red) !important; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 10px;
+  font-size: 10px; font-weight: 600; white-space: nowrap;
+  border: 1px solid transparent; font-family: var(--ui);
+}
+.s-todo     { background: rgba(72,79,88,.3);   color: var(--t2); border-color: var(--b2); }
+.s-inprog   { background: rgba(88,166,255,.1); color: var(--blue); border-color: rgba(88,166,255,.2); }
+.s-review   { background: rgba(188,140,255,.1); color: var(--purple); border-color: rgba(188,140,255,.2); }
+.s-done     { background: rgba(63,185,80,.1);  color: var(--green); border-color: rgba(63,185,80,.2); }
+.s-overdue  { background: rgba(248,81,73,.1);  color: var(--red); border-color: rgba(248,81,73,.2); }
+.p-high { background: rgba(248,81,73,.1);   color: var(--red); border-color: rgba(248,81,73,.2); }
+.p-med  { background: rgba(210,153,34,.1);  color: var(--amber-l); border-color: rgba(210,153,34,.2); }
+.p-low  { background: rgba(63,185,80,.1);   color: var(--green); border-color: rgba(63,185,80,.2); }
+.proj-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--s3); border: 1px solid var(--b2); color: var(--t2); }
+
+/* ── Status dropdown ── */
+.status-wrap { position: relative; display: inline-block; }
+.s-dropdown {
+  position: absolute; top: calc(100% + 3px); left: 0; z-index: 200;
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: var(--r); overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  min-width: 130px; display: none;
+}
+.s-dropdown.open { display: block; }
+.sd-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 10px; cursor: pointer;
+  font-size: 11px; color: var(--t2); transition: background .1s;
+}
+.sd-item:hover { background: var(--s3); color: var(--t1); }
+.sd-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Row actions ── */
+.row-acts { display: flex; gap: 4px; }
+
+/* ── Footer ── */
+.tbl-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; border-top: 1px solid var(--b1);
+  background: rgba(0,0,0,.1);
+}
+.pg-info { font-size: 10px; color: var(--t3); font-family: var(--mono); }
+.pg-btns { display: flex; gap: 3px; }
+.pg-btn {
+  padding: 4px 9px; border: 1px solid var(--b1); border-radius: var(--rsm);
+  background: transparent; color: var(--t2); font-size: 10px;
+  cursor: pointer; transition: all .12s; min-width: 26px; text-align: center;
+  font-family: var(--ui);
+}
+.pg-btn:hover { background: var(--s3); color: var(--t1); }
+.pg-btn.pga { background: var(--blue-d); border-color: var(--blue-d); color: #fff; }
+.pg-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+/* ── Modal ── */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(1,4,9,.75);
+  backdrop-filter: blur(4px); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-bg.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--s1); border: 1px solid var(--b2);
+  border-radius: 10px; width: 520px; max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  transform: translateY(10px); transition: transform .2s;
+}
+.modal-bg.open .modal { transform: translateY(0); }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--b1);
+  background: rgba(0,0,0,.12);
+}
+.modal-title { font-size: 14px; font-weight: 700; color: var(--t1); }
+.modal-close { background: none; border: 1px solid var(--b1); border-radius: var(--rsm); color: var(--t3); font-size: 14px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; transition: all .12s; }
+.modal-close:hover { background: var(--s3); color: var(--t1); }
+.modal-body { padding: 18px 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-grid.f1 { grid-template-columns: 1fr; }
+.form-grid.f3 { grid-template-columns: 1fr 1fr 1fr; }
+.ff { display: flex; flex-direction: column; gap: 5px; }
+.ff label { font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--t2); }
+.ff label .req { color: var(--red); margin-left: 2px; }
+.ff input, .ff select, .ff textarea {
+  background: var(--bg); border: 1px solid var(--b2);
+  border-radius: var(--rsm); padding: 8px 10px;
+  color: var(--t1); font-size: 12px; font-family: var(--ui);
+  outline: none; transition: all .15s; width: 100%;
+}
+.ff input:focus, .ff select:focus, .ff textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(88,166,255,.1); }
+.ff input.err, .ff select.err { border-color: var(--red); animation: shake .3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.ff textarea { resize: vertical; min-height: 60px; }
+.ff select option { background: var(--s2); }
+.err-msg { font-size: 10px; color: var(--red); display: none; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--b1); }
+
+/* ── Detail Panel ── */
+#detail-panel {
+  position: fixed; top: 44px; right: 0; bottom: 0; width: 320px;
+  background: var(--s1); border-left: 1px solid var(--b1);
+  z-index: 300; transform: translateX(100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0,0,0,.5);
+}
+#detail-panel.open { transform: translateX(0); }
+.dp-head { padding: 14px 16px; border-bottom: 1px solid var(--b1); background: rgba(0,0,0,.1); flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; }
+.dp-title { font-size: 13px; font-weight: 700; color: var(--t1); line-height: 1.4; }
+.dp-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+.dp-section { margin-bottom: 16px; }
+.dp-section-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--t3); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--b1); }
+.dp-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 5px 0; font-size: 11px; }
+.dp-k { color: var(--t3); }
+.dp-v { color: var(--t1); font-weight: 500; text-align: right; font-family: var(--mono); font-size: 10px; }
+.dp-desc { font-size: 11px; color: var(--t2); line-height: 1.6; }
+.dp-foot { padding: 12px 14px; border-top: 1px solid var(--b1); display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Confirm ── */
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(1,4,9,.7);
+  z-index: 600; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .15s;
+}
+.confirm-overlay.open { opacity: 1; pointer-events: all; }
+.confirm-box {
+  background: var(--s1); border: 1px solid var(--b2); border-radius: 8px;
+  padding: 20px 22px; width: 340px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.6);
+}
+.confirm-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 6px; }
+.confirm-body { font-size: 12px; color: var(--t2); margin-bottom: 16px; line-height: 1.5; }
+.confirm-acts { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── Toast ── */
+#toast-root { position: fixed; bottom: 16px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.toast {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 13px; border-radius: var(--r);
+  font-size: 11px; font-weight: 500;
+  animation: tin .25s ease; min-width: 200px; max-width: 320px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.6);
+  pointer-events: all;
+}
+.toast.success { background: #0d2b1a; border: 1px solid rgba(63,185,80,.25); color: #7ee787; }
+.toast.info    { background: #0d1b2e; border: 1px solid rgba(88,166,255,.25); color: #79c0ff; }
+.toast.warn    { background: #1f1601; border: 1px solid rgba(210,153,34,.25); color: #e3b341; }
+.toast.error   { background: #2b0a0a; border: 1px solid rgba(248,81,73,.25);  color: #ff7b72; }
+.ti { flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+.toast.success .ti { background: rgba(63,185,80,.2); color: var(--green); }
+.toast.info .ti    { background: rgba(88,166,255,.2); color: var(--blue); }
+@keyframes tin  { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
+@keyframes tout { from{opacity:1} to{opacity:0;transform:translateX(14px)} }
+
+/* util */
+.hidden { display: none !important; }
+.mt-8 { margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════ TOPBAR ════════ -->
+<header id="topbar">
+  <div class="tb-logo">
+    <div class="tb-logomark">T</div>
+    <div class="tb-name">Task<span>Flow</span></div>
+  </div>
+  <div class="tb-div"></div>
+  <div class="tb-tag">MEAN Stack Demo</div>
+  <div class="tb-spacer"></div>
+  <div class="tb-stack">
+    <span class="tech-chip tc-node">Node.js</span>
+    <span class="tech-chip tc-mongo">MongoDB</span>
+    <span class="tech-chip tc-ang">Angular</span>
+    <span class="tech-chip tc-exp">Express</span>
+  </div>
+  <div class="tb-div"></div>
+  <div class="tb-live"><div class="live-d"></div>LIVE</div>
+</header>
+
+<!-- ════════ CODE PANEL ════════ -->
+<div id="code-panel">
+  <div class="cp-tabs" id="cp-tabs">
+    <button class="cp-tab active" data-f="task.model.ts" onclick="selFile(this)"><span class="ft ft-ts"></span>task.model.ts</button>
+    <button class="cp-tab" data-f="project.model.ts" onclick="selFile(this)"><span class="ft ft-ts"></span>project.model.ts</button>
+    <button class="cp-tab" data-f="task.controller.ts" onclick="selFile(this)"><span class="ft ft-ts"></span>task.controller.ts</button>
+    <button class="cp-tab" data-f="task.service.ts" onclick="selFile(this)"><span class="ft ft-ts"></span>task.service.ts</button>
+    <button class="cp-tab" data-f="api.routes.ts" onclick="selFile(this)"><span class="ft ft-ts"></span>api.routes.ts</button>
+    <button class="cp-tab" data-f="api.interfaces.ts" onclick="selFile(this)"><span class="ft ft-ts"></span>api.interfaces.ts</button>
+    <button class="cp-tab" data-f="structure" onclick="selFile(this)"><span class="ft ft-dir"></span>structure</button>
+  </div>
+  <div class="cp-header">
+    <span class="cp-path" id="cp-path">src/models/task.model.ts</span>
+    <span class="cp-lang" id="cp-lang">TypeScript</span>
+  </div>
+  <div class="cp-body" id="cp-body"></div>
+</div>
+
+<!-- ════════ PREVIEW PANEL ════════ -->
+<div id="preview">
+  <div class="app-shell">
+
+    <!-- App Sidebar -->
+    <div class="app-sidebar">
+      <div class="as-section">
+        <div class="as-label">Overview</div>
+        <button class="as-item active" onclick="filterProject('all',this)">
+          <span style="font-size:13px">▦</span> All Projects
+          <span class="as-badge" id="badge-all">0</span>
+        </button>
+      </div>
+      <div class="as-section">
+        <div class="as-label">Projects</div>
+        <button class="as-item" data-proj="TaskFlow API" onclick="filterProject('TaskFlow API',this)">
+          <span class="as-dot" style="background:var(--green)"></span>TaskFlow API
+          <span class="as-badge" id="b-p0">0</span>
+        </button>
+        <button class="as-item" data-proj="Admin Portal" onclick="filterProject('Admin Portal',this)">
+          <span class="as-dot" style="background:var(--blue)"></span>Admin Portal
+          <span class="as-badge" id="b-p1">0</span>
+        </button>
+        <button class="as-item" data-proj="Mobile App" onclick="filterProject('Mobile App',this)">
+          <span class="as-dot" style="background:var(--purple)"></span>Mobile App
+          <span class="as-badge" id="b-p2">0</span>
+        </button>
+        <button class="as-item" data-proj="Data Pipeline" onclick="filterProject('Data Pipeline',this)">
+          <span class="as-dot" style="background:var(--amber)"></span>Data Pipeline
+          <span class="as-badge" id="b-p3">0</span>
+        </button>
+        <button class="as-item" data-proj="Auth Service" onclick="filterProject('Auth Service',this)">
+          <span class="as-dot" style="background:var(--red)"></span>Auth Service
+          <span class="as-badge" id="b-p4">0</span>
+        </button>
+      </div>
+      <div class="as-footer">
+        <div class="as-user">
+          <div class="as-avatar">AM</div>
+          <div><div class="as-user-name">Amisha M.</div><div class="as-user-role">CPO / Product Owner</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Main -->
+    <div class="app-main" id="app-main">
+
+      <!-- Dashboard cards -->
+      <div class="dash-cards">
+        <div class="dash-card dc-blue">
+          <div class="dc-label">Total Projects</div>
+          <div class="dc-val" id="dc-proj">5</div>
+          <div class="dc-sub up">↑ 2 this sprint</div>
+        </div>
+        <div class="dash-card dc-green">
+          <div class="dc-label">Active Tasks</div>
+          <div class="dc-val" id="dc-active">0</div>
+          <div class="dc-sub">in progress + review</div>
+        </div>
+        <div class="dash-card dc-amber">
+          <div class="dc-label">Completed</div>
+          <div class="dc-val" id="dc-done">0</div>
+          <div class="dc-sub up" id="dc-done-sub">↑ 8 today</div>
+        </div>
+        <div class="dash-card dc-red">
+          <div class="dc-label">Overdue</div>
+          <div class="dc-val" id="dc-over">0</div>
+          <div class="dc-sub down" id="dc-over-sub">need attention</div>
+        </div>
+      </div>
+
+      <!-- Tasks section -->
+      <div class="sec-head">
+        <div class="sec-title">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="4" y1="10" x2="7" y2="10"/></svg>
+          Tasks
+          <span style="font-size:10px;font-family:var(--mono);color:var(--t3)" id="task-count-label"></span>
+        </div>
+        <div class="sec-actions">
+          <button class="btn btn-green" onclick="openAddModal()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+            Add Task
+          </button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-w">
+          <span class="search-ico">⌕</span>
+          <input class="search-inp" id="task-search" placeholder="Search tasks…" oninput="handleSearch()">
+        </div>
+        <select class="f-sel" id="f-status" onchange="renderTasks()">
+          <option value="">All Statuses</option>
+          <option value="todo">Todo</option>
+          <option value="inprog">In Progress</option>
+          <option value="review">In Review</option>
+          <option value="done">Done</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <select class="f-sel" id="f-priority" onchange="renderTasks()">
+          <option value="">All Priorities</option>
+          <option value="high">High</option>
+          <option value="med">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" onclick="toast('info','Exporting tasks to CSV...')">↓ Export</button>
+      </div>
+
+      <div class="tbl-wrap">
+        <div class="tbl-inner">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortTasks('title')">Task</th>
+                <th onclick="sortTasks('project')" style="width:110px">Project</th>
+                <th onclick="sortTasks('assignee')" style="width:110px">Assignee</th>
+                <th onclick="sortTasks('priority')" style="width:80px">Priority</th>
+                <th onclick="sortTasks('due')" style="width:90px">Due Date</th>
+                <th onclick="sortTasks('status')" style="width:110px">Status</th>
+                <th class="ns" style="width:80px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="task-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tbl-footer">
+          <span class="pg-info" id="pg-info"></span>
+          <div class="pg-btns" id="pg-btns"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ════════ DETAIL PANEL ════════ -->
+<div id="detail-panel">
+  <div class="dp-head">
+    <div class="dp-title" id="dp-title">—</div>
+    <button class="modal-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="dp-body" id="dp-body"></div>
+  <div class="dp-foot">
+    <button class="btn btn-ghost btn-sm" onclick="toast('info','Opening editor...')">✎ Edit</button>
+    <div class="spacer"></div>
+    <button class="btn btn-danger btn-sm" onclick="closeDetail();toast('warn','Task archived')">Archive</button>
+  </div>
+</div>
+
+<!-- ════════ ADD TASK MODAL ════════ -->
+<div class="modal-bg" id="add-modal" onclick="handleModalBg(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Add New Task</div>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid f1">
+        <div class="ff" id="ff-title">
+          <label>Task Title <span class="req">*</span></label>
+          <input type="text" id="f-title" placeholder="e.g. Implement JWT refresh token">
+          <span class="err-msg" id="em-title">Title required (min 3 chars)</span>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="ff" id="ff-proj">
+          <label>Project <span class="req">*</span></label>
+          <select id="f-proj">
+            <option value="">Select project…</option>
+            <option>TaskFlow API</option>
+            <option>Admin Portal</option>
+            <option>Mobile App</option>
+            <option>Data Pipeline</option>
+            <option>Auth Service</option>
+          </select>
+          <span class="err-msg" id="em-proj">Project required</span>
+        </div>
+        <div class="ff">
+          <label>Assignee</label>
+          <select id="f-assignee">
+            <option value="">Unassigned</option>
+            <option>Alex Chen</option>
+            <option>Sarah Kim</option>
+            <option>Marcus Bell</option>
+            <option>Priya Nair</option>
+            <option>Daniel Wu</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid f3">
+        <div class="ff">
+          <label>Priority</label>
+          <select id="f-prio">
+            <option value="med">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="ff">
+          <label>Due Date</label>
+          <input type="date" id="f-due">
+        </div>
+        <div class="ff">
+          <label>Est. Hours</label>
+          <input type="number" id="f-hrs" placeholder="0" min="1" max="200">
+        </div>
+      </div>
+      <div class="form-grid f1">
+        <div class="ff">
+          <label>Description</label>
+          <textarea id="f-desc" placeholder="Describe what needs to be done…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-green" onclick="saveTask()">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,8 6,12 14,4"/></svg>
+        Add Task
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CONFIRM DIALOG ════════ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title">Delete Task</div>
+    <div class="confirm-body" id="confirm-msg">Are you sure you want to delete this task? This action cannot be undone.</div>
+    <div class="confirm-acts">
+      <button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-root"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   BACKEND CODE STRINGS
+   Real production-quality Node.js/Express/MongoDB code
+════════════════════════════════════════════ */
+const CODE_FILES = {
+
+'task.model.ts': {
+  path: 'src/models/task.model.ts',
+  lang: 'TypeScript',
+  lines: [
+`<cm>// src/models/task.model.ts</cm>`,
+`<kw>import</kw> { <cls>Schema</cls>, <cls>model</cls>, <cls>Document</cls>, <cls>Types</cls> } <kw>from</kw> <str>'mongoose'</str>;`,
+``,
+`<cm>// ── TypeScript Interface ─────────────────────</cm>`,
+`<kw>export interface</kw> <cls>ITask</cls> <kw>extends</kw> <cls>Document</cls> {`,
+`  title:          <prp>string</prp>;`,
+`  description?:   <prp>string</prp>;`,
+`  projectId:      <cls>Types.ObjectId</cls>;`,
+`  assignee?:      <prp>string</prp>;`,
+`  status:         TaskStatus;`,
+`  priority:       TaskPriority;`,
+`  dueDate?:       <cls>Date</cls>;`,
+`  estimatedHours?:<prp>number</prp>;`,
+`  completedAt?:   <cls>Date</cls>;`,
+`  createdAt:      <cls>Date</cls>;`,
+`  updatedAt:      <cls>Date</cls>;`,
+`}`,
+``,
+`<kw>export type</kw> TaskStatus   = <str>'todo'</str> | <str>'inprog'</str> | <str>'review'</str> | <str>'done'</str> | <str>'overdue'</str>;`,
+`<kw>export type</kw> TaskPriority = <str>'high'</str> | <str>'med'</str> | <str>'low'</str>;`,
+``,
+`<cm>// ── Mongoose Schema ──────────────────────────</cm>`,
+`<kw>const</kw> taskSchema = <kw>new</kw> <cls>Schema</cls>&lt;<cls>ITask</cls>&gt;(`,
+`  {`,
+`    title:          { type: <cls>String</cls>, required: <kw>true</kw>, trim: <kw>true</kw>, minlength: <num>3</num> },`,
+`    description:    { type: <cls>String</cls>, default: <kw>null</kw> },`,
+`    projectId:      { type: <cls>Schema.Types.ObjectId</cls>, ref: <str>'Project'</str>, required: <kw>true</kw> },`,
+`    assignee:       { type: <cls>String</cls>, default: <kw>null</kw> },`,
+`    status:         { type: <cls>String</cls>, enum: [<str>'todo'</str>,<str>'inprog'</str>,<str>'review'</str>,<str>'done'</str>,<str>'overdue'</str>], default: <str>'todo'</str> },`,
+`    priority:       { type: <cls>String</cls>, enum: [<str>'high'</str>,<str>'med'</str>,<str>'low'</str>], default: <str>'med'</str> },`,
+`    dueDate:        { type: <cls>Date</cls>, default: <kw>null</kw> },`,
+`    estimatedHours: { type: <cls>Number</cls>, min: <num>0</num>, default: <kw>null</kw> },`,
+`    completedAt:    { type: <cls>Date</cls>, default: <kw>null</kw> },`,
+`  },`,
+`  { timestamps: <kw>true</kw> }`,
+`);`,
+``,
+`<cm>// ── Indexes (performance) ────────────────────</cm>`,
+`taskSchema.index({ projectId: <num>1</num>, status: <num>1</num> });`,
+`taskSchema.index({ assignee: <num>1</num>, status: <num>1</num> });`,
+`taskSchema.index({ dueDate: <num>1</num>, status: <num>1</num> });`,
+``,
+`<cm>// ── Pre-save hook: auto-overdue ───────────────</cm>`,
+`taskSchema.pre(<str>'save'</str>, <kw>function</kw>(<kw>next</kw>) {`,
+`  <kw>if</kw> (<kw>this</kw>.dueDate && <kw>this</kw>.status !== <str>'done'</str>) {`,
+`    <kw>if</kw> (<kw>new</kw> <cls>Date</cls>() > <kw>this</kw>.dueDate) {`,
+`      <kw>this</kw>.status = <str>'overdue'</str>;`,
+`    }`,
+`  }`,
+`  <kw>if</kw> (<kw>this</kw>.status === <str>'done'</str> && !<kw>this</kw>.completedAt) {`,
+`    <kw>this</kw>.completedAt = <kw>new</kw> <cls>Date</cls>();`,
+`  }`,
+`  <kw>next</kw>();`,
+`});`,
+``,
+`<kw>export const</kw> <cls>Task</cls> = model&lt;<cls>ITask</cls>&gt;(<str>'Task'</str>, taskSchema);`,
+  ]
+},
+
+'project.model.ts': {
+  path: 'src/models/project.model.ts',
+  lang: 'TypeScript',
+  lines: [
+`<cm>// src/models/project.model.ts</cm>`,
+`<kw>import</kw> { <cls>Schema</cls>, <cls>model</cls>, <cls>Document</cls> } <kw>from</kw> <str>'mongoose'</str>;`,
+``,
+`<kw>export interface</kw> <cls>IProject</cls> <kw>extends</kw> <cls>Document</cls> {`,
+`  name:           <prp>string</prp>;`,
+`  description?:   <prp>string</prp>;`,
+`  status:         ProjectStatus;`,
+`  priority:       <str>'high'</str> | <str>'med'</str> | <str>'low'</str>;`,
+`  dueDate?:       <cls>Date</cls>;`,
+`  createdBy:      <prp>string</prp>;`,
+`  tags:           <prp>string</prp>[];`,
+`  taskCount:      <prp>number</prp>;       <cm>// denormalized for performance</cm>`,
+`  completedTasks: <prp>number</prp>;`,
+`}`,
+``,
+`<kw>export type</kw> ProjectStatus = <str>'active'</str> | <str>'on-hold'</str> | <str>'completed'</str> | <str>'archived'</str>;`,
+``,
+`<kw>const</kw> projectSchema = <kw>new</kw> <cls>Schema</cls>&lt;<cls>IProject</cls>&gt;(`,
+`  {`,
+`    name:           { type: <cls>String</cls>, required: <kw>true</kw>, trim: <kw>true</kw>, unique: <kw>true</kw> },`,
+`    description:    { type: <cls>String</cls> },`,
+`    status:         { type: <cls>String</cls>, enum: [<str>'active'</str>,<str>'on-hold'</str>,<str>'completed'</str>,<str>'archived'</str>], default: <str>'active'</str> },`,
+`    priority:       { type: <cls>String</cls>, enum: [<str>'high'</str>,<str>'med'</str>,<str>'low'</str>], default: <str>'med'</str> },`,
+`    dueDate:        { type: <cls>Date</cls> },`,
+`    createdBy:      { type: <cls>String</cls>, required: <kw>true</kw> },`,
+`    tags:           [{ type: <cls>String</cls> }],`,
+`    taskCount:      { type: <cls>Number</cls>, default: <num>0</num> },`,
+`    completedTasks: { type: <cls>Number</cls>, default: <num>0</num> },`,
+`  },`,
+`  { timestamps: <kw>true</kw> }`,
+`);`,
+``,
+`<cm>// ── Denormalize task counts on Task save ─────</cm>`,
+`<cm>// Called from task.service.ts after save/delete</cm>`,
+`projectSchema.statics.updateTaskCount = <kw>async function</kw>(projectId: <prp>string</prp>) {`,
+`  <kw>const</kw> [total, done] = <kw>await</kw> <cls>Promise</cls>.all([`,
+`    <cls>Task</cls>.countDocuments({ projectId }),`,
+`    <cls>Task</cls>.countDocuments({ projectId, status: <str>'done'</str> }),`,
+`  ]);`,
+`  <kw>await this</kw>.updateOne({ _id: projectId }, { taskCount: total, completedTasks: done });`,
+`};`,
+``,
+`<kw>export const</kw> <cls>Project</cls> = model&lt;<cls>IProject</cls>&gt;(<str>'Project'</str>, projectSchema);`,
+  ]
+},
+
+'task.controller.ts': {
+  path: 'src/controllers/task.controller.ts',
+  lang: 'TypeScript',
+  lines: [
+`<cm>// src/controllers/task.controller.ts — thin layer, delegates to service</cm>`,
+`<kw>import</kw> { <cls>Request</cls>, <cls>Response</cls>, <cls>NextFunction</cls> } <kw>from</kw> <str>'express'</str>;`,
+`<kw>import</kw> { <cls>TaskService</cls> } <kw>from</kw> <str>'../services/task.service'</str>;`,
+`<kw>import</kw> { <cls>ApiResponse</cls> } <kw>from</kw> <str>'../interfaces/api.interfaces'</str>;`,
+``,
+`<kw>const</kw> taskSvc = <kw>new</kw> <cls>TaskService</cls>();`,
+``,
+`<cm>// GET /api/tasks — with pagination, filtering, sorting</cm>`,
+`<kw>export const</kw> getAllTasks = <kw>async</kw> (`,
+`  req: <cls>Request</cls>, res: <cls>Response</cls>&lt;<cls>ApiResponse</cls>&lt;<cls>ITask</cls>[]&gt;&gt;`,
+`) => {`,
+`  <kw>const</kw> { projectId, status, assignee, page = <num>1</num>, limit = <num>10</num>,`,
+`          sortBy = <str>'createdAt'</str>, sortOrder = <str>'desc'</str> } = req.query;`,
+``,
+`  <kw>const</kw> result = <kw>await</kw> taskSvc.findAll({`,
+`    filters: { projectId <kw>as</kw> <prp>string</prp>, status <kw>as</kw> TaskStatus, assignee <kw>as</kw> <prp>string</prp> },`,
+`    pagination: { page: +page, limit: +limit },`,
+`    sort: { field: sortBy <kw>as</kw> <prp>string</prp>, order: sortOrder <kw>as</kw> <str>'asc'</str> | <str>'desc'</str> },`,
+`  });`,
+``,
+`  res.json({ success: <kw>true</kw>, data: result.data, pagination: result.pagination });`,
+`};`,
+``,
+`<cm>// POST /api/tasks — create new task</cm>`,
+`<kw>export const</kw> createTask = <kw>async</kw> (req: <cls>Request</cls>, res: <cls>Response</cls>) => {`,
+`  <kw>const</kw> task = <kw>await</kw> taskSvc.create(req.body);`,
+`  res.status(<num>201</num>).json({ success: <kw>true</kw>, data: task, message: <str>'Task created'</str> });`,
+`};`,
+``,
+`<cm>// PUT /api/tasks/:id — update task</cm>`,
+`<kw>export const</kw> updateTask = <kw>async</kw> (req: <cls>Request</cls>, res: <cls>Response</cls>) => {`,
+`  <kw>const</kw> task = <kw>await</kw> taskSvc.update(req.params.id, req.body);`,
+`  <kw>if</kw> (!task) <kw>return</kw> res.status(<num>404</num>).json({ success: <kw>false</kw>, message: <str>'Task not found'</str> });`,
+`  res.json({ success: <kw>true</kw>, data: task });`,
+`};`,
+``,
+`<cm>// DELETE /api/tasks/:id</cm>`,
+`<kw>export const</kw> deleteTask = <kw>async</kw> (req: <cls>Request</cls>, res: <cls>Response</cls>) => {`,
+`  <kw>await</kw> taskSvc.remove(req.params.id);`,
+`  res.json({ success: <kw>true</kw>, message: <str>'Task deleted'</str> });`,
+`};`,
+``,
+`<cm>// GET /api/tasks/stats — MongoDB aggregation pipeline</cm>`,
+`<kw>export const</kw> getTaskStats = <kw>async</kw> (req: <cls>Request</cls>, res: <cls>Response</cls>) => {`,
+`  <kw>const</kw> stats = <kw>await</kw> taskSvc.getStats(req.query.projectId <kw>as</kw> <prp>string</prp>);`,
+`  res.json({ success: <kw>true</kw>, data: stats });`,
+`};`,
+  ]
+},
+
+'task.service.ts': {
+  path: 'src/services/task.service.ts',
+  lang: 'TypeScript',
+  lines: [
+`<cm>// src/services/task.service.ts — business logic layer</cm>`,
+`<kw>import</kw> { <cls>Task</cls>, <cls>ITask</cls>, TaskStatus } <kw>from</kw> <str>'../models/task.model'</str>;`,
+`<kw>import</kw> { <cls>Project</cls> } <kw>from</kw> <str>'../models/project.model'</str>;`,
+`<kw>import</kw> { <cls>ITaskFilters</cls>, <cls>IPaginatedResponse</cls> } <kw>from</kw> <str>'../interfaces/api.interfaces'</str>;`,
+``,
+`<kw>export class</kw> <cls>TaskService</cls> {`,
+``,
+`  <cm>// ── Build dynamic MongoDB query ────────────────</cm>`,
+`  <kw>private</kw> buildQuery(filters: <cls>ITaskFilters</cls>) {`,
+`    <kw>const</kw> query: <cls>Record</cls>&lt;<prp>string</prp>, <kw>unknown</kw>&gt; = {};`,
+`    <kw>if</kw> (filters.projectId) query.projectId = filters.projectId;`,
+`    <kw>if</kw> (filters.status)    query.status    = filters.status;`,
+`    <kw>if</kw> (filters.assignee)  query.assignee  = filters.assignee;`,
+`    <kw>return</kw> query;`,
+`  }`,
+``,
+`  <cm>// ── Find all with pagination + sorting ─────────</cm>`,
+`  <kw>async</kw> findAll({ filters, pagination, sort }) {`,
+`    <kw>const</kw> query   = <kw>this</kw>.buildQuery(filters);`,
+`    <kw>const</kw> skip    = (pagination.page - <num>1</num>) * pagination.limit;`,
+`    <kw>const</kw> sortObj = { [sort.field]: sort.order === <str>'asc'</str> ? <num>1</num> : <num>-1</num> };`,
+``,
+`    <kw>const</kw> [data, total] = <kw>await</kw> <cls>Promise</cls>.all([`,
+`      <cls>Task</cls>.find(query).sort(sortObj).skip(skip).limit(pagination.limit).lean(),`,
+`      <cls>Task</cls>.countDocuments(query),`,
+`    ]);`,
+`    <kw>return</kw> { data, pagination: { total, page: pagination.page,`,
+`      pages: <cls>Math</cls>.ceil(total / pagination.limit) } };`,
+`  }`,
+``,
+`  <cm>// ── Create + update denormalized project count ──</cm>`,
+`  <kw>async</kw> create(dto: <cls>Partial</cls>&lt;<cls>ITask</cls>&gt;) {`,
+`    <kw>const</kw> task = <kw>await</kw> <cls>Task</cls>.create(dto);`,
+`    <kw>await</kw> <cls>Project</cls>.updateTaskCount(task.projectId.toString());`,
+`    <kw>return</kw> task;`,
+`  }`,
+``,
+`  <cm>// ── Update task ────────────────────────────────</cm>`,
+`  <kw>async</kw> update(id: <prp>string</prp>, dto: <cls>Partial</cls>&lt;<cls>ITask</cls>&gt;) {`,
+`    <kw>return</kw> <cls>Task</cls>.findByIdAndUpdate(id, dto, { <kw>new</kw>: <kw>true</kw>, runValidators: <kw>true</kw> });`,
+`  }`,
+``,
+`  <cm>// ── Remove + recount ──────────────────────────</cm>`,
+`  <kw>async</kw> remove(id: <prp>string</prp>) {`,
+`    <kw>const</kw> task = <kw>await</kw> <cls>Task</cls>.findByIdAndDelete(id);`,
+`    <kw>if</kw> (task) <kw>await</kw> <cls>Project</cls>.updateTaskCount(task.projectId.toString());`,
+`  }`,
+``,
+`  <cm>// ── MongoDB Aggregation Pipeline for stats ─────</cm>`,
+`  <kw>async</kw> getStats(projectId?: <prp>string</prp>): <kw>Promise</kw>&lt;<cls>ITaskStats</cls>&gt; {`,
+`    <kw>const</kw> match = projectId ? { $match: { projectId } } : { $match: {} };`,
+`    <kw>return</kw> <cls>Task</cls>.aggregate([`,
+`      match,`,
+`      { $group: {`,
+`          _id: <str>'$status'</str>,`,
+`          count: { $sum: <num>1</num> },`,
+`      }},`,
+`      { $group: {`,
+`          _id: <kw>null</kw>,`,
+`          total:   { $sum: <str>'$count'</str> },`,
+`          byStatus: { $push: { status: <str>'$_id'</str>, count: <str>'$count'</str> } },`,
+`      }},`,
+`    ]);`,
+`  }`,
+`}`,
+  ]
+},
+
+'api.routes.ts': {
+  path: 'src/routes/api.routes.ts',
+  lang: 'TypeScript',
+  lines: [
+`<cm>// src/routes/api.routes.ts</cm>`,
+`<kw>import</kw> { <cls>Router</cls> } <kw>from</kw> <str>'express'</str>;`,
+`<kw>import</kw> * <kw>as</kw> taskCtrl    <kw>from</kw> <str>'../controllers/task.controller'</str>;`,
+`<kw>import</kw> * <kw>as</kw> projectCtrl <kw>from</kw> <str>'../controllers/project.controller'</str>;`,
+`<kw>import</kw> { <fn>authenticate</fn> } <kw>from</kw> <str>'../middleware/auth.middleware'</str>;`,
+`<kw>import</kw> { <fn>validate</fn> }     <kw>from</kw> <str>'../middleware/validate.middleware'</str>;`,
+`<kw>import</kw> { <cls>createTaskSchema</cls>, <cls>updateTaskSchema</cls> } <kw>from</kw> <str>'../validators/task.schema'</str>;`,
+``,
+`<kw>const</kw> router = <cls>Router</cls>();`,
+``,
+`<cm>// ── Auth middleware on all routes ───────────</cm>`,
+`router.use(<fn>authenticate</fn>);`,
+``,
+`<cm>// ── Task endpoints ──────────────────────────</cm>`,
+`router.get(   <str>'/tasks'</str>,        taskCtrl.getAllTasks);`,
+`router.get(   <str>'/tasks/stats'</str>,  taskCtrl.getTaskStats);`,
+`router.get(   <str>'/tasks/:id'</str>,    taskCtrl.getTaskById);`,
+`router.post(  <str>'/tasks'</str>,        <fn>validate</fn>(<cls>createTaskSchema</cls>), taskCtrl.createTask);`,
+`router.put(   <str>'/tasks/:id'</str>,    <fn>validate</fn>(<cls>updateTaskSchema</cls>), taskCtrl.updateTask);`,
+`router.delete(<str>'/tasks/:id'</str>,    taskCtrl.deleteTask);`,
+``,
+`<cm>// ── Project endpoints ───────────────────────</cm>`,
+`router.get(   <str>'/projects'</str>,     projectCtrl.getAllProjects);`,
+`router.get(   <str>'/projects/:id'</str>, projectCtrl.getProjectById);`,
+`router.post(  <str>'/projects'</str>,     projectCtrl.createProject);`,
+`router.put(   <str>'/projects/:id'</str>, projectCtrl.updateProject);`,
+`router.delete(<str>'/projects/:id'</str>, projectCtrl.deleteProject);`,
+``,
+`<kw>export default</kw> router;`,
+``,
+`<cm>/* app.ts — Express app setup</cm>`,
+`<cm>   ─────────────────────────── */</cm>`,
+`<kw>import</kw> express <kw>from</kw> <str>'express'</str>;`,
+`<kw>import</kw> mongoose <kw>from</kw> <str>'mongoose'</str>;`,
+`<kw>import</kw> cors <kw>from</kw> <str>'cors'</str>;`,
+`<kw>import</kw> helmet <kw>from</kw> <str>'helmet'</str>;`,
+`<kw>import</kw> { <fn>errorHandler</fn> } <kw>from</kw> <str>'./middleware/error.middleware'</str>;`,
+`<kw>import</kw> apiRoutes <kw>from</kw> <str>'./routes/api.routes'</str>;`,
+``,
+`<kw>const</kw> app = express();`,
+`app.use(helmet());`,
+`app.use(cors({ origin: process.env.FRONTEND_URL }));`,
+`app.use(express.json({ limit: <str>'10mb'</str> }));`,
+`app.use(<str>'/api'</str>, apiRoutes);`,
+`app.use(<fn>errorHandler</fn>);        <cm>// global error handler</cm>`,
+``,
+`mongoose.connect(process.env.MONGO_URI!).then(() => {`,
+`  app.listen(process.env.PORT || <num>4000</num>);`,
+`  console.log(<str>\`Server ready on port \${process.env.PORT}\`</str>);`,
+`});`,
+  ]
+},
+
+'api.interfaces.ts': {
+  path: 'src/interfaces/api.interfaces.ts',
+  lang: 'TypeScript',
+  lines: [
+`<cm>// src/interfaces/api.interfaces.ts</cm>`,
+`<cm>// Generic API contract — used by both backend and Angular services</cm>`,
+``,
+`<cm>// ── Standard API response wrapper ───────────</cm>`,
+`<kw>export interface</kw> <cls>ApiResponse</cls>&lt;T&gt; {`,
+`  success:    <prp>boolean</prp>;`,
+`  data?:      T;`,
+`  message?:   <prp>string</prp>;`,
+`  error?:     <prp>string</prp>;`,
+`  pagination?: <cls>PaginationMeta</cls>;`,
+`}`,
+``,
+`<kw>export interface</kw> <cls>PaginationMeta</cls> {`,
+`  total:  <prp>number</prp>;`,
+`  page:   <prp>number</prp>;`,
+`  limit:  <prp>number</prp>;`,
+`  pages:  <prp>number</prp>;`,
+`}`,
+``,
+`<kw>export interface</kw> <cls>IPaginatedResponse</cls>&lt;T&gt; {`,
+`  data:       T[];`,
+`  pagination: <cls>PaginationMeta</cls>;`,
+`}`,
+``,
+`<cm>// ── Task filter params ──────────────────────</cm>`,
+`<kw>export interface</kw> <cls>ITaskFilters</cls> {`,
+`  projectId?: <prp>string</prp>;`,
+`  status?:    TaskStatus;`,
+`  assignee?:  <prp>string</prp>;`,
+`  search?:    <prp>string</prp>;`,
+`}`,
+``,
+`<kw>export interface</kw> <cls>ITaskStats</cls> {`,
+`  total:      <prp>number</prp>;`,
+`  byStatus:   { status: TaskStatus; count: <prp>number</prp> }[];`,
+`  overdue:    <prp>number</prp>;`,
+`  completedToday: <prp>number</prp>;`,
+`}`,
+``,
+`<cm>// ── Angular service — HTTP layer ────────────</cm>`,
+`<cm>// @Injectable({ providedIn: 'root' })</cm>`,
+`<cm>// export class TaskApiService {</cm>`,
+`<cm>//   private readonly base = '/api/tasks';</cm>`,
+`<cm>//</cm>`,
+`<cm>//   constructor(private http: HttpClient) {}</cm>`,
+`<cm>//</cm>`,
+`<cm>//   getAll(filters: ITaskFilters): Observable&lt;IPaginatedResponse&lt;ITask&gt;&gt; {</cm>`,
+`<cm>//     const params = new HttpParams({ fromObject: { ...filters } });</cm>`,
+`<cm>//     return this.http.get&lt;ApiResponse&lt;ITask[]&gt;&gt;(this.base, { params })</cm>`,
+`<cm>//       .pipe(map(r => r.data!));</cm>`,
+`<cm>//   }</cm>`,
+`<cm>// }</cm>`,
+  ]
+},
+
+'structure': {
+  path: 'project structure',
+  lang: 'plaintext',
+  lines: [
+`<cm>taskflow/</cm>`,
+`<cm>├── backend/                     ← Node.js + Express</cm>`,
+`<cm>│   ├── src/</cm>`,
+`<cm>│   │   ├── controllers/         ← thin HTTP handlers</cm>`,
+`<cm>│   │   │   ├── task.controller.ts</cm>`,
+`<cm>│   │   │   └── project.controller.ts</cm>`,
+`<cm>│   │   ├── services/            ← business logic</cm>`,
+`<cm>│   │   │   ├── task.service.ts</cm>`,
+`<cm>│   │   │   └── project.service.ts</cm>`,
+`<cm>│   │   ├── models/              ← Mongoose schemas</cm>`,
+`<cm>│   │   │   ├── task.model.ts</cm>`,
+`<cm>│   │   │   └── project.model.ts</cm>`,
+`<cm>│   │   ├── middleware/          ← reusable middleware</cm>`,
+`<cm>│   │   │   ├── auth.middleware.ts     ← JWT verify</cm>`,
+`<cm>│   │   │   ├── validate.middleware.ts ← Zod / Joi</cm>`,
+`<cm>│   │   │   └── error.middleware.ts    ← global errors</cm>`,
+`<cm>│   │   ├── routes/</cm>`,
+`<cm>│   │   │   └── api.routes.ts</cm>`,
+`<cm>│   │   ├── interfaces/</cm>`,
+`<cm>│   │   │   └── api.interfaces.ts</cm>`,
+`<cm>│   │   └── app.ts               ← Express setup</cm>`,
+`<cm>│   ├── package.json</cm>`,
+`<cm>│   └── tsconfig.json</cm>`,
+`<cm>│</cm>`,
+`<cm>├── frontend/                    ← Angular app</cm>`,
+`<cm>│   ├── src/app/</cm>`,
+`<cm>│   │   ├── core/</cm>`,
+`<cm>│   │   │   ├── services/        ← API service layer</cm>`,
+`<cm>│   │   │   │   ├── task.service.ts</cm>`,
+`<cm>│   │   │   │   └── project.service.ts</cm>`,
+`<cm>│   │   │   └── interceptors/    ← auth, error</cm>`,
+`<cm>│   │   ├── shared/</cm>`,
+`<cm>│   │   │   └── components/      ← reusable UI</cm>`,
+`<cm>│   │   ├── features/</cm>`,
+`<cm>│   │   │   ├── dashboard/</cm>`,
+`<cm>│   │   │   ├── tasks/</cm>`,
+`<cm>│   │   │   └── projects/</cm>`,
+`<cm>│   │   └── app.routes.ts        ← lazy-loaded routes</cm>`,
+`<cm>│   └── environments/</cm>`,
+`<cm>│       ├── environment.ts       ← API base URL</cm>`,
+`<cm>│       └── environment.prod.ts</cm>`,
+`<cm>│</cm>`,
+`<cm>├── docker-compose.yml           ← dev environment</cm>`,
+`<cm>└── .env.example</cm>`,
+  ]
+},
+
+};
+
+/* ════════════════════════════════════════════
+   TASK DATA
+════════════════════════════════════════════ */
+let TASKS = [
+  {id:1, title:'Implement JWT refresh token rotation',   project:'Auth Service',  assignee:'Alex Chen',   priority:'high', due:'2024-03-12', status:'overdue',  desc:'Implement secure refresh token rotation with Redis blacklist. Tokens should expire every 15 minutes.',   hrs:8},
+  {id:2, title:'Build MongoDB aggregation for analytics', project:'TaskFlow API',  assignee:'Sarah Kim',   priority:'high', due:'2024-03-25', status:'inprog',   desc:'Create aggregation pipeline for dashboard stats endpoint. Need by-project and by-assignee breakdowns.', hrs:6},
+  {id:3, title:'Angular task list component',              project:'Admin Portal',  assignee:'Marcus Bell', priority:'med',  due:'2024-03-22', status:'inprog',   desc:'Reusable Angular component with sorting, filtering, pagination. OnPush change detection.',               hrs:5},
+  {id:4, title:'Mongoose schema validation tests',         project:'TaskFlow API',  assignee:'Priya Nair',  priority:'med',  due:'2024-03-28', status:'review',   desc:'Write Jest unit tests for all Mongoose schemas. Focus on validators and pre-save hooks.',                hrs:4},
+  {id:5, title:'Fix pagination bug on mobile',             project:'Admin Portal',  assignee:'Daniel Wu',   priority:'high', due:'2024-03-14', status:'overdue',  desc:'Pagination breaks on viewport < 480px. Reproducible on iOS Safari 16. Fix and add mobile test.',         hrs:3},
+  {id:6, title:'Design system token migration',            project:'Admin Portal',  assignee:'Sarah Kim',   priority:'low',  due:'2024-04-05', status:'todo',     desc:'Migrate hardcoded colors to CSS custom properties. Update all Angular components to use new tokens.',     hrs:12},
+  {id:7, title:'MongoDB Atlas search integration',         project:'Data Pipeline', assignee:'Alex Chen',   priority:'high', due:'2024-03-30', status:'todo',     desc:'Integrate Atlas Search for full-text task search. Replace current regex-based search.',                 hrs:8},
+  {id:8, title:'Push notification service',                project:'Mobile App',    assignee:'Marcus Bell', priority:'med',  due:'2024-04-02', status:'todo',     desc:'Implement FCM push notifications for task assignments and due date reminders.',                          hrs:10},
+  {id:9, title:'Express rate limiting middleware',         project:'Auth Service',  assignee:'Priya Nair',  priority:'med',  due:'2024-03-26', status:'inprog',   desc:'Add rate limiting per IP and per user using Redis. Different limits for auth vs regular endpoints.',      hrs:3},
+  {id:10,title:'Angular reactive form validation',         project:'Admin Portal',  assignee:'Daniel Wu',   priority:'low',  due:'2024-04-10', status:'todo',     desc:'Add comprehensive form validation with custom validators and real-time error messages.',                  hrs:4},
+  {id:11,title:'Deploy to AWS EC2 + configure nginx',      project:'TaskFlow API',  assignee:'Alex Chen',   priority:'high', due:'2024-03-20', status:'done',     desc:'Set up EC2 t3.medium, configure nginx reverse proxy, PM2 process management, SSL via Let\'s Encrypt.',  hrs:5},
+  {id:12,title:'MongoDB Atlas backup strategy',            project:'Data Pipeline', assignee:'Sarah Kim',   priority:'med',  due:'2024-03-18', status:'done',     desc:'Configure automated daily backups to S3. Test restoration procedure and document recovery steps.',       hrs:3},
+  {id:13,title:'Angular HTTP interceptor for auth',        project:'Admin Portal',  assignee:'Marcus Bell', priority:'high', due:'2024-03-15', status:'done',     desc:'Implement HTTP interceptor to inject JWT tokens and handle 401 responses with automatic token refresh.',  hrs:4},
+  {id:14,title:'Mobile app offline sync with MongoDB',     project:'Mobile App',    assignee:'Priya Nair',  priority:'med',  due:'2024-04-15', status:'review',   desc:'Implement offline-first sync using Realm MongoDB with conflict resolution for task updates.',             hrs:16},
+  {id:15,title:'Write API documentation with Swagger',     project:'TaskFlow API',  assignee:'Daniel Wu',   priority:'low',  due:'2024-04-01', status:'review',   desc:'Document all REST endpoints using OpenAPI 3.0. Auto-generate from Express routes where possible.',        hrs:6},
+  {id:16,title:'Set up CI/CD GitHub Actions pipeline',     project:'Auth Service',  assignee:'Alex Chen',   priority:'high', due:'2024-03-22', status:'inprog',   desc:'Configure automated testing, linting, and deployment to staging on PR merge. Blue-green deployment.',     hrs:7},
+  {id:17,title:'Optimize Express query performance',       project:'TaskFlow API',  assignee:'Sarah Kim',   priority:'med',  due:'2024-04-08', status:'todo',     desc:'Profile slow endpoints using clinic.js, add missing MongoDB indexes, implement query caching with Redis.',hrs:5},
+];
+
+let nextId = 18;
+const PROJ_COLORS = {
+  'TaskFlow API': '#3fb950', 'Admin Portal': '#58a6ff',
+  'Mobile App': '#bc8cff', 'Data Pipeline': '#e3b341', 'Auth Service': '#f85149',
+};
+
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+const S = {
+  sort: { col: 'due', dir: 'asc' },
+  page: 1, ps: 10,
+  projFilter: 'all',
+  statusFilter: '', prioFilter: '', search: '',
+  openDropdown: null,
+  pendingDelete: null,
+};
+
+/* ════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const fmtDate = s => { if (!s) return '—'; const d = new Date(s+'T12:00:00'); return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const isOverdue = t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0,10);
+const statusLabel = { todo:'Todo', inprog:'In Progress', review:'In Review', done:'Done', overdue:'Overdue' };
+const statusClass = { todo:'s-todo', inprog:'s-inprog', review:'s-review', done:'s-done', overdue:'s-overdue' };
+const prioClass   = { high:'p-high', med:'p-med', low:'p-low' };
+const prioLabel   = { high:'High', med:'Medium', low:'Low' };
+
+/* ════════════════════════════════════════════
+   CODE PANEL
+════════════════════════════════════════════ */
+function selFile(btn) {
+  document.querySelectorAll('.cp-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const f = btn.dataset.f;
+  const file = CODE_FILES[f];
+  if (!file) return;
+  $('cp-path').textContent = file.path;
+  $('cp-lang').textContent = file.lang;
+  const body = $('cp-body');
+  body.innerHTML = file.lines.map((l, i) =>
+    `<div class="cl"><span class="ln">${i+1}</span><span class="lc">${l}</span></div>`
+  ).join('');
+}
+
+/* ════════════════════════════════════════════
+   TASK TABLE
+════════════════════════════════════════════ */
+function getFiltered() {
+  return TASKS.filter(t =>
+    (S.projFilter === 'all' || t.project === S.projFilter) &&
+    (!S.statusFilter || t.status === S.statusFilter) &&
+    (!S.prioFilter   || t.priority === S.prioFilter) &&
+    (!S.search       || t.title.toLowerCase().includes(S.search) || t.assignee.toLowerCase().includes(S.search))
+  ).sort((a, b) => {
+    let av = a[S.sort.col] || '', bv = b[S.sort.col] || '';
+    if (typeof av === 'string') av = av.toLowerCase(), bv = bv.toLowerCase();
+    return (av < bv ? -1 : av > bv ? 1 : 0) * (S.sort.dir === 'asc' ? 1 : -1);
+  });
+}
+
+function renderTasks() {
+  S.statusFilter = $('f-status')?.value || '';
+  S.prioFilter   = $('f-priority')?.value || '';
+  const rows  = getFiltered();
+  const total = rows.length;
+  const pages = Math.max(1, Math.ceil(total / S.ps));
+  if (S.page > pages) S.page = pages;
+  const slice = rows.slice((S.page-1)*S.ps, S.page*S.ps);
+
+  // thead sort classes
+  document.querySelectorAll('thead th:not(.ns)').forEach(th => {
+    th.classList.remove('sa','sd');
+    const col = th.getAttribute('onclick')?.match(/sortTasks\('(\w+)'\)/)?.[1];
+    if (col === S.sort.col) th.classList.add(S.sort.dir === 'asc' ? 'sa' : 'sd');
+  });
+
+  const tbody = $('task-tbody');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--t3);font-size:12px">No tasks match your filters</td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(t => {
+      const due = t.due;
+      const overdue = isOverdue(t);
+      const dueColor = overdue ? 'class="td-over"' : '';
+      const sc = t.status === 'overdue' ? 's-overdue' : (overdue ? 's-overdue' : statusClass[t.status]);
+      const sl = t.status === 'overdue' ? 'Overdue' : (overdue ? 'Overdue' : statusLabel[t.status]);
+      return `<tr onclick="openDetail(${t.id})" data-id="${t.id}">
+        <td class="td-b" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${t.title}</td>
+        <td><span class="proj-badge" style="border-left:2px solid ${PROJ_COLORS[t.project]||'var(--b2)'}">${t.project}</span></td>
+        <td style="font-size:11px">${t.assignee||'—'}</td>
+        <td><span class="badge ${prioClass[t.priority]}">${prioLabel[t.priority]}</span></td>
+        <td ${dueColor} class="td-m">${fmtDate(due)}</td>
+        <td>
+          <div class="status-wrap">
+            <span class="badge ${sc}" style="cursor:pointer" onclick="event.stopPropagation();toggleStatusDrop(event,${t.id})">${sl} ▾</span>
+            <div class="s-dropdown" id="sdrop-${t.id}">
+              <div class="sd-item" onclick="event.stopPropagation();setStatus(${t.id},'todo')"><div class="sd-dot" style="background:var(--t3)"></div>Todo</div>
+              <div class="sd-item" onclick="event.stopPropagation();setStatus(${t.id},'inprog')"><div class="sd-dot" style="background:var(--blue)"></div>In Progress</div>
+              <div class="sd-item" onclick="event.stopPropagation();setStatus(${t.id},'review')"><div class="sd-dot" style="background:var(--purple)"></div>In Review</div>
+              <div class="sd-item" onclick="event.stopPropagation();setStatus(${t.id},'done')"><div class="sd-dot" style="background:var(--green)"></div>Done</div>
+            </div>
+          </div>
+        </td>
+        <td onclick="event.stopPropagation()"><div class="row-acts">
+          <button class="btn-icon" title="View" onclick="openDetail(${t.id})">◎</button>
+          <button class="btn-icon btn-danger" style="font-size:11px" title="Delete" onclick="confirmDelete(${t.id})">✕</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Pagination
+  $('pg-info').textContent = total ? `${(S.page-1)*S.ps+1}–${Math.min(S.page*S.ps,total)} of ${total}` : '0 tasks';
+  $('task-count-label').textContent = `— ${total} task${total!==1?'s':''}`;
+  let btns = `<button class="pg-btn" onclick="goPage(${S.page-1})" ${S.page<=1?'disabled':''}>‹</button>`;
+  for (let i=1; i<=pages; i++) btns += `<button class="pg-btn${i===S.page?' pga':''}" onclick="goPage(${i})">${i}</button>`;
+  btns += `<button class="pg-btn" onclick="goPage(${S.page+1})" ${S.page>=pages?'disabled':''}>›</button>`;
+  $('pg-btns').innerHTML = btns;
+
+  updateDash();
+  updateSidebar();
+}
+
+function updateDash() {
+  const all = TASKS;
+  $('dc-active').textContent = all.filter(t=>t.status==='inprog'||t.status==='review').length;
+  $('dc-done').textContent   = all.filter(t=>t.status==='done').length;
+  const ov = all.filter(t=>t.status==='overdue'||isOverdue(t)).length;
+  $('dc-over').textContent   = ov;
+  if (ov > 0) { $('dc-over').style.color = 'var(--red)'; }
+}
+
+function updateSidebar() {
+  const projs = ['TaskFlow API','Admin Portal','Mobile App','Data Pipeline','Auth Service'];
+  $('badge-all').textContent = TASKS.length;
+  projs.forEach((p,i) => {
+    const el = $('b-p'+i);
+    if (el) el.textContent = TASKS.filter(t=>t.project===p).length;
+  });
+}
+
+function sortTasks(col) {
+  S.sort.dir = S.sort.col === col ? (S.sort.dir==='asc'?'desc':'asc') : 'asc';
+  S.sort.col = col;
+  renderTasks();
+}
+function goPage(p) {
+  const pages = Math.ceil(getFiltered().length / S.ps);
+  S.page = Math.max(1, Math.min(p, pages));
+  renderTasks();
+}
+
+let searchT;
+function handleSearch() {
+  clearTimeout(searchT);
+  searchT = setTimeout(() => {
+    S.search = ($('task-search').value || '').toLowerCase();
+    S.page = 1;
+    renderTasks();
+  }, 280);
+}
+
+function filterProject(proj, btn) {
+  document.querySelectorAll('.as-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  S.projFilter = proj;
+  S.page = 1;
+  renderTasks();
+}
+
+/* ════════════════════════════════════════════
+   STATUS DROPDOWN
+════════════════════════════════════════════ */
+function toggleStatusDrop(e, id) {
+  e.stopPropagation();
+  const dd = $('sdrop-'+id);
+  if (!dd) return;
+  const wasOpen = dd.classList.contains('open');
+  document.querySelectorAll('.s-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (!wasOpen) { dd.classList.add('open'); S.openDropdown = id; }
+  else S.openDropdown = null;
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.s-dropdown.open').forEach(d => d.classList.remove('open'));
+  S.openDropdown = null;
+});
+
+function setStatus(id, status) {
+  const t = TASKS.find(x => x.id === id);
+  if (!t) return;
+  t.status = status;
+  document.querySelectorAll('.s-dropdown.open').forEach(d => d.classList.remove('open'));
+  renderTasks();
+  toast('success', `Status updated → ${statusLabel[status]}`);
+}
+
+/* ════════════════════════════════════════════
+   DETAIL PANEL
+════════════════════════════════════════════ */
+function openDetail(id) {
+  const t = TASKS.find(x => x.id === id);
+  if (!t) return;
+  $('dp-title').textContent = t.title;
+  const sc = t.status==='overdue'||isOverdue(t) ? 's-overdue' : statusClass[t.status];
+  const sl = t.status==='overdue'||isOverdue(t) ? 'Overdue' : statusLabel[t.status];
+  $('dp-body').innerHTML = `
+    <div class="dp-section">
+      <div class="dp-section-label">Details</div>
+      <div class="dp-row"><span class="dp-k">Project</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:${PROJ_COLORS[t.project]||'var(--t3)'};flex-shrink:0"></span><span class="dp-v" style="font-family:var(--ui);font-size:11px">${t.project}</span></span></div>
+      <div class="dp-row"><span class="dp-k">Assignee</span><span class="dp-v" style="font-family:var(--ui);font-size:11px">${t.assignee||'Unassigned'}</span></div>
+      <div class="dp-row"><span class="dp-k">Priority</span><span class="dp-v"><span class="badge ${prioClass[t.priority]}">${prioLabel[t.priority]}</span></span></div>
+      <div class="dp-row"><span class="dp-k">Status</span><span class="dp-v"><span class="badge ${sc}">${sl}</span></span></div>
+      <div class="dp-row"><span class="dp-k">Due Date</span><span class="dp-v ${isOverdue(t)?'td-over':''}">${fmtDate(t.due)}</span></div>
+      <div class="dp-row"><span class="dp-k">Est. Hours</span><span class="dp-v">${t.hrs||'—'}h</span></div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-label">Description</div>
+      <div class="dp-desc">${t.desc||'No description.'}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-label">API Endpoint</div>
+      <div style="font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--b1);border-radius:var(--rsm);padding:10px;color:var(--t2);line-height:1.8">
+        <span style="color:var(--amber-l)">GET</span> /api/tasks/${t.id}<br>
+        <span style="color:var(--amber-l)">PUT</span> /api/tasks/${t.id}<br>
+        <span style="color:var(--red)">DELETE</span> /api/tasks/${t.id}
+      </div>
+    </div>`;
+  $('detail-panel').classList.add('open');
+  document.querySelectorAll('#task-tbody tr').forEach(r => r.classList.remove('row-sel'));
+  const row = document.querySelector(`#task-tbody tr[data-id="${id}"]`);
+  if (row) row.classList.add('row-sel');
+}
+function closeDetail() { $('detail-panel').classList.remove('open'); document.querySelectorAll('#task-tbody tr').forEach(r=>r.classList.remove('row-sel')); }
+
+/* ════════════════════════════════════════════
+   ADD TASK MODAL
+════════════════════════════════════════════ */
+function openAddModal() {
+  const today = new Date(); today.setDate(today.getDate()+7);
+  $('f-due').value = today.toISOString().slice(0,10);
+  $('add-modal').classList.add('open');
+}
+function closeAddModal() {
+  $('add-modal').classList.remove('open');
+  ['f-title','f-proj','f-assignee','f-prio','f-hrs','f-desc'].forEach(id => {
+    const el = $(id); if (el) el.value = el.tagName==='SELECT'?el.options[0].value:'';
+  });
+  ['em-title','em-proj'].forEach(id => { const el=$(id); if(el) el.style.display='none'; });
+  ['ff-title','ff-proj'].forEach(id => { const el=$(id); if(el) { const inp=el.querySelector('input,select'); if(inp) inp.classList.remove('err'); } });
+}
+function handleModalBg(e) { if (e.target === $('add-modal')) closeAddModal(); }
+
+function saveTask() {
+  const title = $('f-title').value.trim();
+  const proj  = $('f-proj').value;
+  let valid = true;
+  if (!title || title.length < 3) {
+    $('em-title').style.display='block';
+    $('f-title').classList.add('err');
+    valid = false;
+  } else { $('em-title').style.display='none'; $('f-title').classList.remove('err'); }
+  if (!proj) {
+    $('em-proj').style.display='block';
+    $('f-proj').classList.add('err');
+    valid = false;
+  } else { $('em-proj').style.display='none'; $('f-proj').classList.remove('err'); }
+  if (!valid) return;
+
+  const task = {
+    id:       nextId++,
+    title,
+    project:  proj,
+    assignee: $('f-assignee').value || 'Unassigned',
+    priority: $('f-prio').value || 'med',
+    due:      $('f-due').value || null,
+    status:   'todo',
+    desc:     $('f-desc').value.trim(),
+    hrs:      parseInt($('f-hrs').value) || null,
+  };
+  TASKS.unshift(task);
+  S.page = 1;
+  closeAddModal();
+  renderTasks();
+
+  setTimeout(() => {
+    const row = document.querySelector(`#task-tbody tr[data-id="${task.id}"]`);
+    if (row) row.classList.add('row-new');
+  }, 30);
+  toast('success', `Task created: ${title}`);
+}
+
+/* ════════════════════════════════════════════
+   DELETE CONFIRM
+════════════════════════════════════════════ */
+function confirmDelete(id) {
+  const t = TASKS.find(x=>x.id===id);
+  if (!t) return;
+  S.pendingDelete = id;
+  $('confirm-msg').textContent = `Delete "${t.title}"? This cannot be undone.`;
+  $('confirm-overlay').classList.add('open');
+  $('confirm-ok').onclick = () => { doDelete(); };
+}
+function closeConfirm() { $('confirm-overlay').classList.remove('open'); S.pendingDelete = null; }
+function doDelete() {
+  const id = S.pendingDelete;
+  const t = TASKS.find(x=>x.id===id);
+  if (!t) return;
+  const row = document.querySelector(`#task-tbody tr[data-id="${id}"]`);
+  if (row) {
+    row.classList.add('row-del');
+    setTimeout(() => { TASKS = TASKS.filter(x=>x.id!==id); renderTasks(); }, 280);
+  } else {
+    TASKS = TASKS.filter(x=>x.id!==id);
+    renderTasks();
+  }
+  closeConfirm();
+  toast('warn', `Deleted: ${t.title}`);
+}
+
+/* ════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════ */
+function toast(type, msg) {
+  const icons = { success:'✓', info:'ℹ', warn:'⚠', error:'✕' };
+  const div = document.createElement('div');
+  div.className = `toast ${type}`;
+  div.innerHTML = `<div class="ti">${icons[type]||'ℹ'}</div><span>${msg}</span>`;
+  $('toast-root').appendChild(div);
+  setTimeout(() => { div.style.animation='tout .3s ease forwards'; setTimeout(()=>div.remove(),300); }, 3000);
+}
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+function init() {
+  selFile(document.querySelector('.cp-tab.active'));
+  renderTasks();
+  setTimeout(() => toast('info','MEAN stack demo loaded — 17 tasks across 5 projects'), 600);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
